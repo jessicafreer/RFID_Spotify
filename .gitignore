@@ -1,0 +1,5 @@
+config.json
+.spotify_rfid_cache
+.spotify_rfid_cache*
+__pycache__/
+*.pyc
