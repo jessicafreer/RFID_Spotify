@@ -1,22 +1,39 @@
 # RFID_Spotify
-Trigger a Spotify playlist using an RFID card
 
-Pre-requisites:
-Must have a Spotify premium account
-Must get Spotify API client ID and secret
-Must have a Raspberry Pi (I used 3b)
-Must have a WIIM device as a connected device in your Spotify premium account (trust me - this is WAYYY easier than trying to make Raspberry Pi work with Bluetooth)
-Must have RFID card reader
-Must have programmable RFID cards
+Play a Spotify playlist on a WiiM device when an RFID card is scanned.
 
-Install Python dependencies:
-- `pip install -r requirements.txt`
+The script reads a USB RFID reader exposed as a Linux input device, looks up the scanned card ID in a JSON mapping file, then starts the mapped playlist through Spotify Connect on your WiiM.
 
-Copy config.example.json to config.json and fill in your local values.
+## Requirements
 
-Set `rfid.device_path` to your reader event device, for example `/dev/input/by-id/usb-YOUR_RFID_READER-event-kbd`.
+- Spotify Premium
+- A Spotify app registration with a client ID and client secret
+- A WiiM device visible in Spotify Connect
+- A USB RFID reader that appears under `/dev/input/...`
+- Linux or Raspberry Pi OS with Python installed
 
-Your config.json file should contain:
+## Install
+
+```bash
+pip install -r requirements.txt
+```
+
+Dependencies:
+
+- `spotipy`
+- `evdev`
+
+## Configuration
+
+The script uses `config.json` in the project root.
+
+- If `config.json` does not exist, the script creates it with default values and exits.
+- You can also start from `config.example.json`.
+- Set `rfid.device_path` to your reader event device, for example `/dev/input/by-id/usb-YOUR_RFID_READER-event-kbd`.
+
+Example config:
+
+```json
 {
     "spotify": {
         "client_id": "YOUR_SPOTIFY_CLIENT_ID",
@@ -35,18 +52,75 @@ Your config.json file should contain:
         "device_path": "/dev/input/by-id/usb-YOUR_RFID_READER-event-kbd"
     }
 }
-
-## Raspberry Pi service setup
-
-To run the player automatically on boot without an attached keyboard session:
-
-1. Install dependencies:
-    `pip install -r requirements.txt`
-2. Put the project in a stable location such as `/home/pi/RFID_Spotify`.
-3. Set `config.json`, especially `rfid.device_path`, to your RFID reader event device.
-4. Create `/etc/systemd/system/rfid-spotify.service` with contents like:
-
 ```
+
+Notes:
+
+- `wiim.match_mode` supports `contains` or `exact`.
+- `wiim.initial_volume` is optional. If set, it is clamped to `0-100` before playback starts.
+- On startup, the script merges missing defaults into an older `config.json` and writes the updated file back to disk.
+
+## RFID Mapping File
+
+`rfid.mapping_file` should point to a JSON file that maps card IDs to Spotify playlists.
+
+Example:
+
+```json
+{
+    "1234567890": "spotify:playlist:37i9dQZF1DXcBWIGoYBM5M",
+    "9876543210": "https://open.spotify.com/playlist/37i9dQZF1DX4dyzvuaRJ0n",
+    "1122334455": "37i9dQZF1DWXRqgorJj26U"
+}
+```
+
+Playlist values can be any of these forms:
+
+- A Spotify playlist URI
+- A Spotify playlist URL
+- A bare Spotify playlist ID
+
+## First Run
+
+The script authenticates with Spotify using OAuth and stores the token cache at `spotify.cache_path`.
+
+On the first authenticated run, expect to complete the Spotify login flow in a browser.
+
+## Usage
+
+Start the RFID player:
+
+```bash
+python RFID_SPOTIFY_WIIM.py
+```
+
+List visible Spotify Connect devices:
+
+```bash
+python RFID_SPOTIFY_WIIM.py --list-devices
+```
+
+Test a playlist without scanning a card:
+
+```bash
+python RFID_SPOTIFY_WIIM.py --test-playlist spotify:playlist:37i9dQZF1DXcBWIGoYBM5M
+```
+
+Behavior at runtime:
+
+- The script retries several times to find the configured WiiM device in Spotify Connect.
+- If the RFID mapping file is missing or empty, it prints guidance and exits.
+- If a card is scanned with no matching entry, it reports that and waits for the next scan.
+
+## Raspberry Pi Service Setup
+
+To run automatically on boot without a logged-in shell session:
+
+1. Put the project in a stable location such as `/home/pi/RFID_Spotify`.
+2. Verify `config.json`, especially `rfid.device_path`.
+3. Create `/etc/systemd/system/rfid-spotify.service`:
+
+```ini
 [Unit]
 Description=RFID Spotify Player
 After=network-online.target
@@ -63,18 +137,20 @@ Restart=always
 WantedBy=multi-user.target
 ```
 
-5. Enable and start the service:
+4. Enable and start it:
 
-```
+```bash
 sudo systemctl daemon-reload
 sudo systemctl enable rfid-spotify
 sudo systemctl start rfid-spotify
 ```
 
-6. Check service health and logs:
+5. Check status and logs:
 
-```
+```bash
 sudo systemctl status rfid-spotify
 journalctl -u rfid-spotify -f
 ```
+
+If the service cannot open the RFID device, confirm the service user has permission to read the input device.
 
