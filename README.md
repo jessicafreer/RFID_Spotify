@@ -11,6 +11,20 @@ The script reads a USB RFID reader exposed as a Linux input device, looks up the
 - A WiiM device visible in Spotify Connect
 - A USB RFID reader that appears under `/dev/input/...`
 - Linux or Raspberry Pi OS with Python installed
+- Programmable RFID cards
+
+## Parts List
+
+Here are the exact products I used. You do not need to use the same hardware, but this is a complete shopping list if you are starting from scratch.
+
+Disclosure: The links below are Amazon affiliate links. As an Amazon Associate I earn from qualifying purchases.
+
+- [Element14 Raspberry Pi 3 B+ Motherboard](https://amzn.to/4ecO3TP) (affiliate link)
+- [CanaKit 5V 2.5A Raspberry Pi 3 B+ Power Supply/Adapter](https://amzn.to/43Dsc1P) (affiliate link)
+- [Beamo Preloaded 64GB Raspberry Pi OS MicroSD Card](https://amzn.to/4x6SDe3) (affiliate link)
+- [WiiM Mini AirPlay 2 Wireless Audio Streamer](https://amzn.to/4x09oHE) (affiliate link)
+- [13.56Mhz USB RFID Reader](https://amzn.to/3RDH3GY) (affiliate link)
+- [100 PCS 125KHz RFID Proximity ID Cards](https://amzn.to/4vhWsLx) (affiliate link)
 
 ## Install
 
